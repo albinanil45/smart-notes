@@ -86,26 +86,6 @@ exports.deleteCollection = async (req, res) => {
         // ✅ delete collection
         await Collection.deleteOne({ _id: id });
 
-        // 🔥 emit socket events
-        const io = req.app.get("io");
-
-        // notify notes updated (collection removed)
-        notes.forEach((note) => {
-            io.to(userId.toString()).emit("noteChanged", {
-                type: "updated",
-                note: {
-                    ...note.toObject(),
-                    collectionId: null,
-                },
-            });
-        });
-
-        // notify collection deleted
-        io.to(userId.toString()).emit("collectionChanged", {
-            type: "permanent_deleted",
-            collectionId: id,
-        });
-
         res.json({ message: "Collection deleted and notes unlinked" });
     } catch (err) {
         res.status(500).json({ message: err.message });

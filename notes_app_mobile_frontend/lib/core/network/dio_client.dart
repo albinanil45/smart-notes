@@ -11,7 +11,7 @@ class DioClient {
   DioClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: "http://192.168.31.247:5000/api",
+        baseUrl: "https://smart-notes-d9b1.onrender.com/api",
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {"Content-Type": "application/json"},

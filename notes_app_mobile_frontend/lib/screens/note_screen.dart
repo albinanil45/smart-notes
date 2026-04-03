@@ -121,17 +121,14 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
 
     try {
       if (_currentNote == null) {
-        // Create new note
-        await provider.createNote(
+        // ✅ Assign directly from the returned note — no index guessing
+        _currentNote = await provider.createNote(
           title: title,
           content: content,
           collectionId: _selectedCollectionId,
           color: _selectedColor,
         );
-        // grab the newly created note from provider
-        _currentNote = provider.notes.isNotEmpty ? provider.notes.first : null;
       } else {
-        // Update existing
         await provider.updateNote(_currentNote!.id, {
           'title': title,
           'content': content,

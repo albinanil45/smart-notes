@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/collection_model.dart';
 import '../services/collection_service.dart';
-import 'socket_provider.dart';
 
 class CollectionProvider extends ChangeNotifier {
   final CollectionService _service = CollectionService();
@@ -33,39 +32,19 @@ class CollectionProvider extends ChangeNotifier {
   }
 
   // =========================================================
-  // ✅ SOCKET ATTACH
-  // =========================================================
-  void attachSocket(SocketProvider socketProvider) {
-    socketProvider.onCollectionCreated = _handleCreate;
-    socketProvider.onCollectionUpdated = _handleUpdate;
-    socketProvider.onCollectionPermanentDeleted = _handleDelete;
-  }
-
-  // =========================================================
-  // ✅ SOCKET HANDLERS
+  // ✅ HELPERS
   // =========================================================
 
-  void _handleCreate(CollectionModel collection) {
-    _collections.insert(0, collection); // newest first
-    notifyListeners();
-  }
-
-  void _handleUpdate(CollectionModel collection) {
-    final index = _collections.indexWhere((c) => c.id == collection.id);
-
-    if (index != -1) {
-      _collections[index] = collection;
-      notifyListeners();
+  CollectionModel? _findById(String id) {
+    try {
+      return _collections.firstWhere((c) => c.id == id);
+    } catch (_) {
+      return null;
     }
   }
 
-  void _handleDelete(String id) {
-    _collections.removeWhere((c) => c.id == id);
-    notifyListeners();
-  }
-
   // =========================================================
-  // ✅ CRUD METHODS
+  // ✅ CRUD METHODS (MANUAL UPDATE)
   // =========================================================
 
   Future<void> createCollection({
@@ -78,7 +57,10 @@ class CollectionProvider extends ChangeNotifier {
         color: color,
       );
 
-      _handleCreate(collection);
+      // Add newest at top
+      _collections.insert(0, collection);
+
+      notifyListeners();
     } catch (e) {
       throw e.toString();
     }
@@ -86,8 +68,23 @@ class CollectionProvider extends ChangeNotifier {
 
   Future<void> updateCollection(String id, Map<String, dynamic> fields) async {
     try {
-      final updated = await _service.updateCollection(id, fields);
-      _handleUpdate(updated);
+      final existing = _findById(id);
+      if (existing == null) return;
+
+      await _service.updateCollection(id, fields);
+
+      // Manually update fields (optimistic update)
+      final updated = existing.copyWith(
+        name: fields['name'] ?? existing.name,
+        color: fields['color'] ?? existing.color,
+      );
+
+      final index = _collections.indexWhere((c) => c.id == id);
+      if (index != -1) {
+        _collections[index] = updated;
+      }
+
+      notifyListeners();
     } catch (e) {
       throw e.toString();
     }
@@ -96,29 +93,28 @@ class CollectionProvider extends ChangeNotifier {
   Future<void> deleteCollection(String id) async {
     try {
       await _service.deleteCollection(id);
-      // Socket will handle removal
+
+      // Remove locally using ID
+      _collections.removeWhere((c) => c.id == id);
+
+      notifyListeners();
     } catch (e) {
       throw e.toString();
     }
   }
 
   // =========================================================
-  // ✅ HELPERS
+  // ✅ PUBLIC HELPERS
   // =========================================================
 
   CollectionModel? getById(String id) {
-    try {
-      return _collections.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null;
-    }
+    return _findById(id);
   }
 
   bool exists(String id) {
     return _collections.any((c) => c.id == id);
   }
 
-  // Optional: clear all (logout case)
   void clear() {
     _collections.clear();
     notifyListeners();

@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:notes_app_mobile_frontend/providers/auth_provider.dart';
-import 'package:notes_app_mobile_frontend/providers/socket_provider.dart';
 import 'package:notes_app_mobile_frontend/providers/note_provider.dart';
 import 'package:notes_app_mobile_frontend/providers/collection_provider.dart';
 import 'package:notes_app_mobile_frontend/screens/blocked_screen.dart';
@@ -49,7 +48,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _initApp(String userId) async {
-    final socketProvider = context.read<SocketProvider>();
+    //final socketProvider = context.read<SocketProvider>();
     final noteProvider = context.read<NoteProvider>();
     final collectionProvider = context.read<CollectionProvider>();
 
@@ -59,11 +58,11 @@ class _AuthGateState extends State<AuthGate> {
       print("🚀 Initializing app for user: $userId");
 
       // 1. Connect socket
-      await socketProvider.init(userId);
+      //await socketProvider.init(userId);
 
       // 2. Attach listeners
-      noteProvider.attachSocket(socketProvider);
-      collectionProvider.attachSocket(socketProvider);
+      //noteProvider.attachSocket(socketProvider);
+      //collectionProvider.attachSocket(socketProvider);
 
       // 3. Fetch initial data
       await Future.wait([
